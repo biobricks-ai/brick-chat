@@ -48,13 +48,13 @@ def generate(user_query: str):
     ]
 
     # setup the model generation configuration
-    # Temperature: 1
+    # Temperature: 0.75
     # Top P: 0.95
     # Maximum Output Tokens: 65535 (maximum possible for this model)
     # Default safety options
     # Thinking: OFF
     generate_content_config = types.GenerateContentConfig(
-        temperature=1,
+        temperature=0.75,
         top_p=0.95,
         max_output_tokens=65535,
         safety_settings=[
