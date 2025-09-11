@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from google import genai
 from google.genai import types
+import starters
 
 # Create a RAG Corpus, Import Files, and Generate a response
 
@@ -17,7 +18,7 @@ def generate(user_query: str):
     client = genai.Client()
 
     # read the prompt and system instructions files and set up standard variables for the model
-    with open("instructions/prompt.txt", "r", encoding="utf-8") as f:
+    with open("instructions/prompt.md", "r", encoding="utf-8") as f:
         prompt_template = f.read()
     with open("instructions/si.txt", "r", encoding="utf-8") as f:
         si = f.read()
@@ -48,34 +49,39 @@ def generate(user_query: str):
     ]
 
     # setup the model generation configuration
-    # Temperature: 0.75
-    # Top P: 0.95
-    # Maximum Output Tokens: 65535 (maximum possible for this model)
-    # Default safety options
-    # Thinking: OFF
+    temperature = 0.8
+    top_p = 0.95
+    max_output_tokens = 65535  # maximum possible for this model
+    # Low threshold safety
+    thinking = 0  # Thinking: OFF
     generate_content_config = types.GenerateContentConfig(
-        temperature=0.75,
-        top_p=0.95,
-        max_output_tokens=65535,
+        temperature=temperature,
+        top_p=top_p,
+        max_output_tokens=max_output_tokens,
         safety_settings=[
-            types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="OFF"),
             types.SafetySetting(
-                category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="OFF"
+                category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_LOW_AND_ABOVE"
             ),
             types.SafetySetting(
-                category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="OFF"
+                category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold="BLOCK_LOW_AND_ABOVE",
             ),
-            types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="OFF"),
+            types.SafetySetting(
+                category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold="BLOCK_LOW_AND_ABOVE",
+            ),
+            types.SafetySetting(
+                category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_LOW_AND_ABOVE"
+            ),
         ],
         tools=rag_retrieval_tool,
         system_instruction=[types.Part.from_text(text=si)],
         thinking_config=types.ThinkingConfig(
-            thinking_budget=0,
+            thinking_budget=thinking,
         ),
     )
 
     # use a content stream to gather the output from the model and return the collected stream
-    response_chunks = []
     for chunk in client.models.generate_content_stream(
         model=model, contents=contents, config=generate_content_config
     ):
@@ -85,16 +91,17 @@ def generate(user_query: str):
             or not chunk.candidates[0].content.parts
         ):
             continue
-        response_chunks.append(chunk.text)
-    response = "".join(response_chunks)
-
-    return response
+        yield chunk.text
 
 
 @cl.on_message
 async def main(message: cl.Message):
-    # Generate response
-    response = generate(message.content)
+    # Create a message placeholder
+    msg = await cl.Message(content="").send()
 
-    # Send a response back to the user
-    await cl.Message(content=response).send()
+    # Stream chunks from the model
+    for chunk in generate(message.content):
+        await msg.stream_token(chunk)
+
+    # Finalize
+    await msg.update()
