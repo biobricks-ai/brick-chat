@@ -16,8 +16,4 @@ async def set_starters():
             label="Clinical variations information",
             message="I want some information on clinical variations, so find me a brick that will handle that",
         ),
-        cl.Starter(
-            label="Side effects of tylenol",
-            message="What are some side effects of tylenol, according to the bricks?",
-        ),
     ]
