@@ -20,7 +20,7 @@ def generate(user_query: str):
     # read the prompt and system instructions files and set up standard variables for the model
     with open("instructions/prompt.md", "r", encoding="utf-8") as f:
         prompt_template = f.read()
-    with open("instructions/si.txt", "r", encoding="utf-8") as f:
+    with open("instructions/si.md", "r", encoding="utf-8") as f:
         si = f.read()
     msg = types.Part.from_text(
         text=prompt_template.format(
@@ -50,7 +50,7 @@ def generate(user_query: str):
 
     # setup the model generation configuration
     temperature = 0.8
-    top_p = 0.95
+    top_p = 0.5
     max_output_tokens = 65535  # maximum possible for this model
     # Low threshold safety
     thinking = 0  # Thinking: OFF
