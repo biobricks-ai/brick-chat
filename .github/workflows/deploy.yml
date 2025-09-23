@@ -91,10 +91,8 @@ jobs:
           flags: |
             --port=6525
             --max-instances=2
-            --cpu=1
-            --memory=2Gi
-            --timeout=60
-            --concurrency=80
+            --cpu=4
+            --memory=8Gi
             --allow-unauthenticated
           env_vars: |
             ENVIRONMENT=preview
