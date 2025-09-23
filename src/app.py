@@ -49,8 +49,8 @@ def generate(user_query: str):
     ]
 
     # setup the model generation configuration
-    temperature = 0.8
-    top_p = 0.5
+    temperature = 1
+    top_p = 0.95
     max_output_tokens = 65535  # maximum possible for this model
     # Low threshold safety
     thinking = 0  # Thinking: OFF
